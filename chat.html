@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>NEXUS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Unified Room Panel -->
+  <div class="room-section" id="roomSection">
+
+    <!-- Recent Rooms -->
+    <div id="recentRoomsSection" style="display:none; margin-bottom: 20px;">
+      <h3 style="margin-bottom: 12px;">Recent Rooms</h3>
+      <div id="recentRoomsList"></div>
+      <div class="panel-divider"></div>
+    </div>
+
+    <!-- Search -->
+    <h3>Search Rooms</h3>
+    <div style="display: flex; gap: 8px; margin-bottom: 6px;">
+      <input type="text" id="searchRoom" placeholder="Search for rooms..." style="margin: 0; flex: 1;">
+      <button onclick="searchRooms()" style="width: 80px; margin: 0; border-radius: var(--radius-sm);">Search</button>
+    </div>
+    <div id="roomResults" style="margin-bottom: 4px;"></div>
+
+    <div class="panel-divider"></div>
+
+    <!-- Create / Join -->
+    <h3 style="margin-bottom: 16px;">Create or Join</h3>
+    <input type="text" id="roomName" placeholder="Room name">
+    <input type="password" id="roomPassword" placeholder="Room password">
+    <button onclick="createRoom()">Create Room</button>
+    <button onclick="joinRoom()" class="btn-secondary">Join Room</button>
+
+  </div>
+
+  <!-- Chat Box -->
+  <div class="chat-box" id="chatBox" style="display: none;">
+
+    <!-- Header -->
+    <div class="chat-header">
+      <div style="width: 48px;"></div>
+      <h2 id="roomNameDisplay" style="position: absolute; left: 50%; transform: translateX(-50%);"></h2>
+      <div style="display: flex; align-items: center; gap: 10px;">
+
+        <!-- Small circular search button -->
+        <button onclick="toggleSearch()" class="search-toggle-btn" id="searchToggleBtn" title="Search">🔍</button>
+
+        <!-- Profile -->
+        <div class="profile-container">
+          <button onclick="toggleProfileMenu()" class="profile-btn" id="profileBtn">
+            <img id="profilePic" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect fill='%23222' width='100' height='100'/><text x='50%25' y='50%25' font-size='50' text-anchor='middle' dy='.3em' fill='white'>👤</text></svg>" alt="Profile">
+            <span class="online-indicator" style="display: none;"></span>
+          </button>
+
+          <!-- Profile Dropdown -->
+          <div id="profileMenu" class="profile-menu">
+            <div class="profile-header">
+              <img id="profilePicLarge" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect fill='%23222' width='100' height='100'/><text x='50%25' y='50%25' font-size='50' text-anchor='middle' dy='.3em' fill='white'>👤</text></svg>" alt="Profile">
+              <div class="profile-header-info">
+                <div id="profileUsername" style="font-weight: 500; font-size: 14px; margin-bottom: 4px;">User</div>
+                <div id="profileEmail" style="font-size: 11px; opacity: 0.5; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">email@example.com</div>
+              </div>
+            </div>
+            <div class="profile-menu-items">
+              <button onclick="openProfilePicModal()" class="menu-item">Change Profile Picture</button>
+              <button onclick="openPasswordModal()" class="menu-item">Change Password</button>
+              <button onclick="openThemeModal()" class="menu-item">Change Theme</button>
+              <button onclick="backupMessages()" class="menu-item">Backup to Java Server</button>
+              <button onclick="backupToDevice()" class="menu-item">Backup to Device</button>
+              <button onclick="logout()" class="menu-item logout-item">Logout</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Collapsible Search Bar -->
+    <div class="search-container" id="searchContainer" style="display: none;">
+      <input type="text" id="searchInput" placeholder="Search messages..." onkeyup="searchMessages()">
+      <button onclick="toggleSearch()">✖</button>
+    </div>
+
+    <!-- Online Users -->
+    <div class="online-users-bar" id="onlineUsersBar">
+      <span class="online-users-label">Online</span>
+      <span style="font-size:11px; color: var(--text-secondary); font-family: 'Exo 2';">Joining room...</span>
+    </div>
+
+    <!-- Messages -->
+    <div id="messagesWrapper" style="position: relative;">
+      <div id="messages">
+        <!-- Empty state -->
+        <div id="emptyState" class="empty-state">
+          <div class="empty-state-icon">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 8h32a2 2 0 012 2v22a2 2 0 01-2 2H14l-8 6V10a2 2 0 012-2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+              <circle cx="17" cy="20" r="2" fill="currentColor" opacity="0.5"/>
+              <circle cx="24" cy="20" r="2" fill="currentColor" opacity="0.5"/>
+              <circle cx="31" cy="20" r="2" fill="currentColor" opacity="0.5"/>
+            </svg>
+          </div>
+          <p class="empty-state-title">No messages yet</p>
+          <p class="empty-state-sub">Be the first to say something</p>
+        </div>
+      </div>
+      <!-- Scroll to bottom button -->
+      <button id="scrollBottomBtn" onclick="scrollToBottom()" style="display:none;">
+        ↓ <span id="unreadBadge" style="display:none;"></span>
+      </button>
+    </div>
+
+    <!-- Typing Indicator -->
+    <div id="typingIndicator" style="display: none;"></div>
+
+    <!-- Reply Preview Bar -->
+    <div id="replyBar" style="display: none;">
+      <div id="replyPreview"></div>
+      <button onclick="cancelReply()" id="replyCancel">✖</button>
+    </div>
+
+    <!-- Message Input -->
+    <div class="message-input-container">
+      <input type="text" id="message" placeholder="Type a message...">
+      <input type="file" id="fileInput" style="display: none;">
+      <button onclick="document.getElementById('fileInput').click()" class="attach-btn">📎</button>
+      <button onclick="sendMessage()" class="send-btn" id="sendBtn">➤</button>
+    </div>
+  </div>
+
+  <!-- Profile Picture Modal -->
+  <div id="profilePicModal" class="modal">
+    <div class="modal-content">
+      <h3>Profile Picture</h3>
+
+      <!-- Local file upload -->
+      <input type="file" id="profilePicFile" accept="image/*" style="display:none;" onchange="handleProfilePicFile(event)">
+      <button onclick="document.getElementById('profilePicFile').click()" style="margin-bottom: 6px;">
+        Upload from Device
+      </button>
+
+      <!-- Preview -->
+      <div id="profilePicPreview" style="display:none; margin: 12px 0; text-align: center;">
+        <img id="profilePicPreviewImg" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:1px solid var(--border-color);">
+      </div>
+
+      <div class="input-divider"><span>or paste url</span></div>
+
+      <input type="url" id="profilePicUrl" placeholder="https://...">
+      <div style="display: flex; gap: 10px; margin-top: 14px;">
+        <button onclick="saveProfilePic()" style="flex: 1;">Save</button>
+        <button onclick="closeModal('profilePicModal')" style="flex: 1;" class="btn-secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Password Modal -->
+  <div id="passwordModal" class="modal">
+    <div class="modal-content">
+      <h3>Change Password</h3>
+      <input type="password" id="currentPassword" placeholder="Current password">
+      <input type="password" id="newPassword" placeholder="New password">
+      <input type="password" id="confirmPassword" placeholder="Confirm new password">
+      <div style="display: flex; gap: 10px; margin-top: 18px;">
+        <button onclick="changePassword()" style="flex: 1;">Update</button>
+        <button onclick="closeModal('passwordModal')" style="flex: 1;" class="btn-secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Theme Modal -->
+  <div id="themeModal" class="modal">
+    <div class="modal-content">
+      <h3>Choose Theme</h3>
+      <div class="theme-options">
+        <div class="theme-option" onclick="setTheme('dark')">
+          <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);"></div>
+          <span>Dark</span>
+        </div>
+        <div class="theme-option" onclick="setTheme('blue')">
+          <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #010a1a 0%, #0d2d5e 100%); border-radius: 12px; border: 1px solid rgba(77,166,255,0.2);"></div>
+          <span>Blue</span>
+        </div>
+        <div class="theme-option" onclick="setTheme('green')">
+          <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #010f06 0%, #0a2d14 100%); border-radius: 12px; border: 1px solid rgba(77,255,170,0.2);"></div>
+          <span>Green</span>
+        </div>
+        <div class="theme-option" onclick="setTheme('purple')">
+          <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #0a0112 0%, #2d0a4a 100%); border-radius: 12px; border: 1px solid rgba(217,102,255,0.2);"></div>
+          <span>Purple</span>
+        </div>
+      </div>
+      <button onclick="closeModal('themeModal')" class="btn-secondary" style="margin-top: 8px;">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Delete Confirm Modal -->
+  <div id="deleteModal" class="modal">
+    <div class="modal-content" style="text-align: center;">
+      <h3>Delete Message</h3>
+      <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 24px; font-weight: 300; letter-spacing: 0.5px;">This message will be permanently removed.</p>
+      <div style="display: flex; gap: 10px;">
+        <button onclick="confirmDelete()" style="flex: 1; background: var(--accent-color); color: #000;">Delete</button>
+        <button onclick="closeModal('deleteModal')" style="flex: 1;" class="btn-secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="transition.js"></script>
+  <script src="bg.js"></script>
+  <script type="module" src="chat.js"></script>
+</body>
+</html>
